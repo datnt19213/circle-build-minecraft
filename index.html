@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minecraft Circle Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+:root {
+  --bg: #09090b;
+  --bg-card: #111113;
+  --bg-hover: #1a1a1f;
+  --bg-input: #18181b;
+  --border: #27272a;
+  --border-focus: #52525b;
+  --text: #fafafa;
+  --text-muted: #a1a1aa;
+  --text-dim: #52525b;
+  --accent: #22c55e;
+  --accent-dim: #16a34a22;
+  --accent-text: #4ade80;
+  --amber: #f59e0b;
+  --amber-dim: #f59e0b22;
+  --blue: #3b82f6;
+  --blue-dim: #3b82f622;
+  --red: #ef4444;
+  --chunk-border: rgba(59,130,246,0.45);
+  --bounds-color: #d946ef;
+  --canvas-bg: #0a0a0f;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+html[data-theme="light"] {
+  --bg: #fafafa;
+  --bg-card: #ffffff;
+  --bg-hover: #cacaca;
+  --bg-input: #f4f4f5;
+  --border: #e4e4e7;
+  --border-focus: #a1a1aa;
+  --text: #18181b;
+  --text-muted: #52525b;
+  --text-dim: #a1a1aa;
+  --accent: #16a34a;
+  --accent-dim: #16a34a14;
+  --accent-text: #15803d;
+  --amber: #d97706;
+  --amber-dim: #d9770614;
+  --blue: #2563eb;
+  --blue-dim: #2563eb14;
+  --red: #dc2626;
+  --chunk-border: rgba(37,99,235,0.4);
+  --bounds-color: #c026d3;
+  --canvas-bg: #f0f0f2;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  overflow: hidden;
+  transition: background 0.25s, color 0.25s;
+}
+
+/* ─── Layout ─── */
+.app {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  grid-template-rows: 32px 1fr;
+  height: 100vh;
+  gap: 0;
+  transition: grid-template-columns 0.25s cubic-bezier(.4,0,.2,1);
+}
+.app.sidebar-collapsed {
+  grid-template-columns: 0px 1fr;
+}
+
+/* ─── Topbar ─── */
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  transition: background 0.25s, border-color 0.25s;
+}
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.topbar-logo svg { color: var(--accent); }
+.topbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+.topbar-badge {
+  font-size: 10px;
+  font-family: 'Roboto Mono', monospace;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--accent-dim);
+  color: var(--accent-text);
+  border: 1px solid #22c55e33;
+  letter-spacing: 0.04em;
+}
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-toggle-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.sidebar-toggle-btn:hover { color: var(--text); border-color: var(--border-focus); }
+.sidebar-toggle-btn svg { width: 15px; height: 15px; transition: transform 0.25s; }
+
+.theme-toggle-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.theme-toggle-btn:hover { color: var(--text); border-color: var(--border-focus); }
+.theme-toggle-btn svg { width: 15px; height: 15px; position: absolute; transition: all 0.3s; }
+.icon-sun { opacity: 0; transform: rotate(-90deg) scale(0.5); }
+.icon-moon { opacity: 1; transform: rotate(0) scale(1); }
+html[data-theme="light"] .icon-sun { opacity: 1; transform: rotate(0) scale(1); }
+html[data-theme="light"] .icon-moon { opacity: 0; transform: rotate(90deg) scale(0.5); }
+
+/* ─── Sidebar ─── */
+.sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--bg-card);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 280px;
+  transition: background 0.25s, border-color 0.25s;
+}
+.app.sidebar-collapsed .sidebar {
+  border-right: none;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.25s;
+}
+.section-title {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.section-title svg { width: 12px; height: 12px; }
+
+/* ─── Form elements ─── */
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.field:last-child { margin-bottom: 0; }
+.field-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.field-row { display: flex; gap: 6px; align-items: center; }
+
+input[type=number], input[type=text], select {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  transition: border-color 0.15s, background 0.25s, color 0.25s;
+  outline: none;
+  -moz-appearance: textfield;
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+input[type=number]:focus, select:focus { border-color: var(--border-focus); }
+select { cursor: pointer; }
+select option { background: var(--bg-input); color: var(--text); }
+
+.input-unit {
+  height: 32px;
+  padding: 0 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── Segment tabs (mode) ─── */
+.seg-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  background: var(--bg-input);
+  padding: 3px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+.seg-tab {
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+.seg-tab svg { width: 12px; height: 12px; flex-shrink: 0; }
+.seg-tab.active {
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+/* ─── Toggle switch ─── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 28px;
+  cursor: pointer;
+}
+.toggle-row:hover .toggle-label { color: var(--text); }
+.toggle-label { font-size: 12px; color: var(--text-muted); transition: color 0.15s; display: flex; align-items: center; gap: 7px; }
+.toggle-label svg { width: 13px; height: 13px; flex-shrink: 0; }
+.toggle-sw {
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--border);
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle-sw.on { background: var(--accent); }
+.toggle-sw::after {
+  content: '';
+  position: absolute;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: white;
+  top: 3px; left: 3px;
+  transition: transform 0.2s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.toggle-sw.on::after { transform: translateX(14px); }
+
+/* ─── Step builder ─── */
+.step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.step-info {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: 'Roboto Mono', monospace;
+}
+.step-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.step-chip {
+  height: 28px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-family: 'Roboto Mono', monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s;
+  position: relative;
+}
+.step-chip:hover { border-color: var(--border-focus); color: var(--text); }
+.step-chip.active {
+  background: var(--amber-dim);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.step-chip.done {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+.step-nav {
+  display: flex;
+  gap: 4px;
+}
+
+/* ─── Step settings ─── */
+.step-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+/* ─── Buttons ─── */
+.btn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.12s;
+  white-space: nowrap;
+  outline: none;
+}
+.btn:hover { border-color: var(--border-focus); color: var(--text); background: var(--bg-hover); }
+.btn:active { transform: scale(0.97); }
+.btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: var(--radius-md);
+}
+.btn-accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+.btn-accent:hover { filter: brightness(0.92); color: #fff; }
+.btn-sm { height: 26px; padding: 0 8px; font-size: 11px; }
+.btn-sm svg { width: 11px; height: 11px; }
+
+/* ─── Stats strip ─── */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.stat-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  transition: background 0.25s, border-color 0.25s;
+}
+.stat-card-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+}
+.stat-card-val {
+  font-size: 16px;
+  font-weight: 500;
+  font-family: 'Roboto Mono', monospace;
+  color: var(--text);
+  line-height: 1;
+}
+.stat-card-sub {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  font-family: 'Roboto Mono', monospace;
+}
+
+/* ─── Export section ─── */
+.cmd-box {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  word-break: break-all;
+  line-height: 1.6;
+  max-height: 80px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  transition: background 0.25s, border-color 0.25s;
+}
+.cmd-box::-webkit-scrollbar { width: 3px; }
+.cmd-box::-webkit-scrollbar-thumb { background: var(--border); }
+
+/* ─── Canvas area ─── */
+.canvas-area {
+  position: relative;
+  background: var(--canvas-bg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s;
+}
+#cvs {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: grab;
+  transform-origin: 0 0;
+  position: absolute;
+  top: 0; left: 0;
+}
+#cvs:active { cursor: grabbing; }
+
+/* ─── Canvas HUD ─── */
+.hud {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+}
+.hud-tl {
+  top: 12px; left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hud-br {
+  bottom: 12px; right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.hud-pill {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  background: var(--bg-card);
+  opacity: 0.85;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  backdrop-filter: blur(4px);
+}
+.hud-coord { color: var(--text); font-weight: 500; }
+.hud-step-label {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  background: rgba(245,158,11,0.15);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 4px;
+  color: var(--amber);
+}
+
+/* ─── Zoom controls (floating) ─── */
+.zoom-controls {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 10;
+  pointer-events: all;
+}
+.zoom-btn {
+  width: 30px;
+  height: 30px;
+  background: var(--bg-card);
+  opacity: 0.92;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s;
+  backdrop-filter: blur(4px);
+}
+.zoom-btn:hover { color: var(--text); border-color: var(--border-focus); }
+.zoom-btn.disabled { opacity: 0.35; cursor: not-allowed; }
+.zoom-btn.disabled:hover { color: var(--text-muted); border-color: var(--border); }
+.zoom-btn:active:not(.disabled) { transform: scale(0.93); }
+.zoom-btn svg { width: 14px; height: 14px; }
+.zoom-level {
+  width: 30px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-family: 'Roboto Mono', monospace;
+  color: var(--text-dim);
+}
+
+/* ─── Toast ─── */
+.toast-wrap {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 999;
+  pointer-events: none;
+}
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: all;
+}
+.toast svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
+
+/* ─── Tooltip ─── */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 10px;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* ─── Scrollbar global ─── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="sidebar-toggle-btn" id="btnToggleSidebar" data-tip="Đóng/mở sidebar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="sidebarToggleIcon"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+    </button>
+    <div class="topbar-logo">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>
+      Circle Builder
+    </div>
+    <div class="topbar-sep"></div>
+    <span class="topbar-badge">Minecraft</span>
+    <div class="topbar-right">
+      <button class="btn btn-sm" id="btnResetView" data-tip="Reset view">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        Reset view
+      </button>
+      <button class="btn btn-sm btn-accent" id="btnExportCoords">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+      <button class="theme-toggle-btn" id="btnLang" data-tip="Đổi ngôn ngữ / Change language" style="font-size: 11px; font-weight: 700; color: var(--text);">
+        VN
+      </button>
+      <button class="theme-toggle-btn" id="btnTheme" data-tip="Đổi theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- SIZE -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 3H3v18h18V3z"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
+        Kích thước
+      </div>
+
+      <div class="field">
+        <div class="field-label">Đơn vị đo</div>
+        <select id="unitMode">
+          <option value="block">Block (số lượng)</option>
+          <option value="chunk">Chunk (×16 blocks)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Radius X <span id="radXDisplay" style="color:var(--text-dim);font-family:'Roboto Mono',monospace;font-size:10px"></span></div>
+        <div class="field-row">
+          <input type="number" id="radX" value="16" min="1" max="256" style="width:100%">
+          <div class="input-unit" id="unitX">blk</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Radius Z <span id="radZDisplay" style="color:var(--text-dim);font-family:'Roboto Mono',monospace;font-size:10px"></span></div>
+        <div class="field-row">
+          <input type="number" id="radZ" value="16" min="1" max="256" style="width:100%">
+          <div class="input-unit" id="unitZ">blk</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="toggle-row" id="syncRadii">
+          <span class="toggle-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/><path d="M14 2h6v6"/><path d="M20 2 10 12"/></svg>
+            Đồng bộ X = Z
+          </span>
+          <div class="toggle-sw on" id="swSync"></div>
+        </label>
+      </div>
+      <div class="field">
+        <label class="toggle-row" id="togBounds">
+          <span class="toggle-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 2"/></svg>
+            Khung viền kích thước
+          </span>
+          <div class="toggle-sw on" id="swBounds"></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- MODE -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+        Chế độ vẽ
+      </div>
+      <div class="seg-tabs" id="modeTabs">
+        <button class="seg-tab active" data-mode="thin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+          Thin
+        </button>
+        <button class="seg-tab" data-mode="thick">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="5"/></svg>
+          Thick
+        </button>
+        <button class="seg-tab" data-mode="filled">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="10"/></svg>
+          Filled
+        </button>
+      </div>
+
+      <!-- thickness for thick mode -->
+      <div id="thickCtrl" style="margin-top:8px;display:none">
+        <div class="field">
+          <div class="field-label">Độ dày ring (blocks)</div>
+          <div class="field-row">
+            <input type="number" id="thickness" value="2" min="1" max="32">
+            <div class="input-unit">blk</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUILD STEPS -->
+    <div class="section">
+      <div class="step-header">
+        <div class="section-title" style="margin-bottom:0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Build Steps
+        </div>
+        <div class="step-info" id="stepInfo">0 / 0</div>
+      </div>
+
+      <div class="step-settings" style="border-top:none;margin-top:0;padding-top:0">
+        <div class="field">
+          <div class="field-label">Số bước xây</div>
+          <div class="field-row">
+            <input type="number" id="numSteps" value="8" min="2" max="64">
+            <div class="input-unit">bước</div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Blocks / bước (mục tiêu)</div>
+          <div class="field-row">
+            <input type="number" id="blocksPerStep" value="0" min="0" placeholder="Tự động">
+            <div class="input-unit">blk</div>
+          </div>
+        </div>
+        <div class="field-label" style="font-size:10px;color:var(--text-dim)">
+          0 = tự chia đều · Nhập số để ưu tiên blocks/bước
+        </div>
+      </div>
+
+      <div class="step-grid" id="stepGrid" style="margin-top:10px"></div>
+
+      <div class="step-nav">
+        <button class="btn btn-sm" id="btnPrev" style="flex:1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          Prev
+        </button>
+        <button class="btn btn-sm" id="btnAll" style="flex:1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="3" height="9"/><rect x="14" y="7" width="3" height="5"/></svg>
+          All
+        </button>
+        <button class="btn btn-sm" id="btnNext" style="flex:1">
+          Next
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- DISPLAY -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+        Hiển thị
+      </div>
+      <label class="toggle-row" id="togGrid">
+        <span class="toggle-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
+          Block grid
+        </span>
+        <div class="toggle-sw on" id="swGrid"></div>
+      </label>
+      <label class="toggle-row" id="togChunk">
+        <span class="toggle-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M3 14h7v7H3z"/><path d="M14 14h7v7h-7z"/></svg>
+          Chunk border (16×16)
+        </span>
+        <div class="toggle-sw on" id="swChunk"></div>
+      </label>
+      <label class="toggle-row" id="togCenter">
+        <span class="toggle-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+          Center marker
+        </span>
+        <div class="toggle-sw on" id="swCenter"></div>
+      </label>
+      <label class="toggle-row" id="togCoord">
+        <span class="toggle-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/></svg>
+          Tọa độ block
+        </span>
+        <div class="toggle-sw" id="swCoord"></div>
+      </label>
+      <label class="toggle-row" id="togStepOnly">
+        <span class="toggle-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Chỉ hiện bước hiện tại
+        </span>
+        <div class="toggle-sw" id="swStepOnly"></div>
+      </label>
+    </div>
+
+    <!-- STATS -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Thống kê
+      </div>
+      <div class="stats-strip">
+        <div class="stat-card">
+          <div class="stat-card-label">Blocks</div>
+          <div class="stat-card-val" id="statBlocks">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Diameter</div>
+          <div class="stat-card-val" id="statDiam">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Chunks</div>
+          <div class="stat-card-val" id="statChunks">0</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div class="stat-card">
+          <div class="stat-card-label">Step hiện tại</div>
+          <div class="stat-card-val" id="statStepBlocks">–</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Bước / tổng</div>
+          <div class="stat-card-val" id="statStepOf">0/0</div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:8px;margin-bottom:0">
+        <div class="field-label">Stack size (mỗi stack 64)</div>
+        <div class="field-row">
+          <input type="number" id="stackSize" value="64" min="1" max="64" style="width:100%">
+          <div class="input-unit">blk/stack</div>
+        </div>
+      </div>
+      <div class="stat-card" style="margin-top:8px">
+        <div class="stat-card-label">Số stack cần dùng</div>
+        <div class="stat-card-val" id="statStacks">0</div>
+        <div class="stat-card-sub" id="statStacksSub">0 stack + 0 dư</div>
+      </div>
+    </div>
+
+    <!-- EXPORT / COMMANDS -->
+    <div class="section" style="flex:1">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Minecraft Commands
+      </div>
+      <div class="field">
+        <div class="field-label">Vật liệu block</div>
+        <input type="text" id="blockMaterial" value="stone" placeholder="stone, glass, wool...">
+      </div>
+      <div class="field">
+        <div class="field-label">Y level</div>
+        <input type="number" id="yLevel" value="64" min="-64" max="320">
+      </div>
+      <div class="field">
+        <div class="field-label">Lệnh Java Edition (/setblock)</div>
+        <div class="cmd-box" id="cmdJava">–</div>
+        <button class="btn btn-sm" id="btnCopyJava" style="margin-top:4px;width:100%">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy Java commands
+        </button>
+      </div>
+      <div class="field">
+        <div class="field-label">Tọa độ (export .txt)</div>
+        <button class="btn btn-sm btn-accent" id="btnExportTxt" style="width:100%">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download coords.txt
+        </button>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- CANVAS AREA -->
+  <main class="canvas-area" id="canvasArea">
+    <canvas id="cvs"></canvas>
+
+    <!-- HUD top-left -->
+    <div class="hud hud-tl">
+      <div class="hud-pill hud-coord" id="hudCoord">x:0 z:0</div>
+      <div class="hud-pill" id="hudZoom">zoom: 12px/blk</div>
+    </div>
+
+    <!-- HUD top-right: step label -->
+    <div class="hud" style="top:12px;right:12px">
+      <div class="hud-step-label" id="hudStep" style="display:none">Step 1 / 8</div>
+    </div>
+
+    <!-- Zoom controls bottom-left -->
+    <div class="zoom-controls">
+      <div class="zoom-btn" id="btnZoomIn" data-tip="Zoom in (max: 1 chunk)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      </div>
+      <div class="zoom-level" id="zoomLevel">12</div>
+      <div class="zoom-btn" id="btnZoomOut" data-tip="Zoom out (min: toàn bộ chunk)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      </div>
+      <div class="zoom-btn" id="btnZoomFit" data-tip="Fit to view" style="margin-top:4px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+      </div>
+    </div>
+
+    <!-- HUD bottom-right -->
+    <div class="hud hud-br">
+      <div class="hud-pill" id="hudOffset">pan: 0, 0</div>
+    </div>
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const S = {
+  rx: 16, rz: 16,
+  lang: 'vi',
+  mode: 'thin',
+  thickness: 2,
+  syncRadii: true,
+  unitMode: 'block',
+  numSteps: 8,
+  blocksPerStep: 0,
+  showGrid: true,
+  showChunk: true,
+  showCenter: true,
+  showCoord: false,
+  showStepOnly: false,
+  showBounds: true,
+  currentStep: -1, // -1 = all
+  zoom: 12,
+  minZoom: 4,
+  maxZoom: 32,
+  panX: 0, panY: 0,
+  blocks: [],
+  steps: [],
+  doneSteps: new Set(),
+  material: 'stone',
+  yLevel: 64,
+  stackSize: 64,
+  sidebarOpen: true,
+  theme: 'dark',
+};
+
+// ═══════════════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════════════
+function setTheme(t) {
+  S.theme = t;
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('mc-circle-theme', t);
+  render();
+}
+document.getElementById('btnTheme').onclick = () => {
+  setTheme(S.theme === 'dark' ? 'light' : 'dark');
+  gsap.fromTo('#btnTheme', {scale: 0.85}, {scale: 1, duration: 0.3, ease: 'back.out(2)'});
+};
+(function initTheme() {
+  const saved = localStorage.getItem('mc-circle-theme');
+  const preferred = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  document.documentElement.setAttribute('data-theme', preferred);
+  S.theme = preferred;
+})();
+
+// ═══════════════════════════════════════════════════════
+// I18N (LANGUAGE)
+// ═══════════════════════════════════════════════════════
+const dict = {
+  vi: {
+    sidebarToggle: "Đóng/mở sidebar",
+    themeToggle: "Đổi theme",
+    langToggle: "Đổi ngôn ngữ",
+    size: "Kích thước",
+    unit: "Đơn vị đo",
+    unitBlock: "Block (số lượng)",
+    unitChunk: "Chunk (×16 blocks)",
+    syncRadii: "Đồng bộ X = Z",
+    showBounds: "Khung viền kích thước",
+    mode: "Chế độ vẽ",
+    thickRing: "Độ dày ring (blocks)",
+    numSteps: "Số bước xây",
+    blocksPerStep: "Blocks / bước (mục tiêu)",
+    autoTarget: "0 = tự chia đều · Nhập số để ưu tiên blocks/bước",
+    autoPlaceholder: "Tự động",
+    display: "Hiển thị",
+    blockCoords: "Tọa độ block",
+    stepOnly: "Chỉ hiện bước hiện tại",
+    stats: "Thống kê",
+    currStep: "Step hiện tại",
+    stepOf: "Bước / tổng",
+    stackSize: "Stack size (mỗi stack 64)",
+    stacksNeeded: "Số stack cần dùng",
+    material: "Vật liệu block",
+    javaCmd: "Lệnh Java Edition (/setblock)",
+    copyJava: "Copy Java commands",
+    exportCoordsTxt: "Tọa độ (export .txt)",
+    zoomOut: "Zoom out (min: toàn bộ chunk)",
+    fullText: "đầy +",
+    remText: "dư (tổng",
+    stepsText: "bước",
+    toastCopy: "Đã copy lệnh Java!",
+    toastExport: "Đã xuất file coords.txt"
+  },
+  en: {
+    sidebarToggle: "Toggle sidebar",
+    themeToggle: "Toggle theme",
+    langToggle: "Change language",
+    size: "Size",
+    unit: "Measurement unit",
+    unitBlock: "Block (count)",
+    unitChunk: "Chunk (×16 blocks)",
+    syncRadii: "Sync X = Z",
+    showBounds: "Size bounding box",
+    mode: "Draw mode",
+    thickRing: "Ring thickness (blocks)",
+    numSteps: "Number of steps",
+    blocksPerStep: "Blocks / step (target)",
+    autoTarget: "0 = auto divide · Enter number to prioritize",
+    autoPlaceholder: "Auto",
+    display: "Display",
+    blockCoords: "Block coordinates",
+    stepOnly: "Show current step only",
+    stats: "Statistics",
+    currStep: "Current Step",
+    stepOf: "Step / Total",
+    stackSize: "Stack size (64 per stack)",
+    stacksNeeded: "Stacks needed",
+    material: "Block material",
+    javaCmd: "Java Edition command (/setblock)",
+    copyJava: "Copy Java commands",
+    exportCoordsTxt: "Coordinates (export .txt)",
+    zoomOut: "Zoom out (min: full chunks)",
+    fullText: "full +",
+    remText: "remainder (total",
+    stepsText: "steps",
+    toastCopy: "Copied Java commands!",
+    toastExport: "Exported coords.txt"
+  }
+};
+
+function updateLangUI() {
+  const d = dict[S.lang];
+  
+  document.getElementById('btnToggleSidebar').dataset.tip = d.sidebarToggle;
+  document.getElementById('btnTheme').dataset.tip = d.themeToggle;
+  document.getElementById('btnLang').dataset.tip = d.langToggle;
+  document.getElementById('btnLang').textContent = S.lang === 'vi' ? 'VN' : 'EN';
+  
+  const sections = document.querySelectorAll('.section-title');
+  if(sections[0]) sections[0].lastChild.textContent = ' ' + d.size;
+  if(sections[1]) sections[1].lastChild.textContent = ' ' + d.mode;
+  if(sections[4]) sections[4].lastChild.textContent = ' ' + d.display;
+  if(sections[5]) sections[5].lastChild.textContent = ' ' + d.stats;
+
+  const labels = document.querySelectorAll('.field-label');
+  labels.forEach(l => {
+    if(l.textContent.includes('Đơn vị đo') || l.textContent.includes('Measurement unit')) l.textContent = d.unit;
+    if(l.textContent.includes('Độ dày ring') || l.textContent.includes('Ring thickness')) l.textContent = d.thickRing;
+    if(l.textContent.includes('Số bước xây') || l.textContent.includes('Number of steps')) l.textContent = d.numSteps;
+    if(l.textContent.includes('Blocks / bước') || l.textContent.includes('Blocks / step')) l.textContent = d.blocksPerStep;
+    if(l.textContent.includes('0 = tự chia đều') || l.textContent.includes('0 = auto divide')) l.textContent = d.autoTarget;
+    if(l.textContent.includes('Stack size') || l.textContent.includes('Stack size')) l.textContent = d.stackSize;
+    if(l.textContent.includes('Vật liệu block') || l.textContent.includes('Block material')) l.textContent = d.material;
+    if(l.textContent.includes('Lệnh Java') || l.textContent.includes('Java Edition command')) l.textContent = d.javaCmd;
+    if(l.textContent.includes('Tọa độ (export') || l.textContent.includes('Coordinates (export')) l.textContent = d.exportCoordsTxt;
+  });
+
+  const opts = document.querySelectorAll('#unitMode option');
+  if(opts[0]) opts[0].textContent = d.unitBlock;
+  if(opts[1]) opts[1].textContent = d.unitChunk;
+
+  const toggles = document.querySelectorAll('.toggle-label');
+  toggles.forEach(t => {
+    if(t.textContent.includes('Đồng bộ') || t.textContent.includes('Sync X = Z')) t.lastChild.textContent = ' ' + d.syncRadii;
+    if(t.textContent.includes('Khung viền') || t.textContent.includes('Size bounding box')) t.lastChild.textContent = ' ' + d.showBounds;
+    if(t.textContent.includes('Tọa độ block') || t.textContent.includes('Block coordinates')) t.lastChild.textContent = ' ' + d.blockCoords;
+    if(t.textContent.includes('Chỉ hiện bước') || t.textContent.includes('Show current step only')) t.lastChild.textContent = ' ' + d.stepOnly;
+  });
+
+  const statCards = document.querySelectorAll('.stat-card-label');
+  statCards.forEach(s => {
+    if(s.textContent.includes('Step hiện tại') || s.textContent.includes('Current Step')) s.textContent = d.currStep;
+    if(s.textContent.includes('Bước / tổng') || s.textContent.includes('Step / Total')) s.textContent = d.stepOf;
+    if(s.textContent.includes('Số stack cần dùng') || s.textContent.includes('Stacks needed')) s.textContent = d.stacksNeeded;
+  });
+
+  const bps = document.getElementById('blocksPerStep');
+  if (bps) bps.placeholder = d.autoPlaceholder;
+  const bzo = document.getElementById('btnZoomOut');
+  if (bzo) bzo.dataset.tip = d.zoomOut;
+  
+  const copyBtn = document.getElementById('btnCopyJava');
+  if (copyBtn) copyBtn.lastChild.textContent = ' ' + d.copyJava;
+
+  // We should NOT call updateStats or updateStepUI here if they rely on layout that's not ready.
+  // We'll let `update()` call them directly, or just update the strings if possible.
+}
+
+document.getElementById('btnLang').onclick = () => {
+  S.lang = S.lang === 'vi' ? 'en' : 'vi';
+  localStorage.setItem('mc-circle-lang', S.lang);
+  updateLangUI();
+  updateStats();
+  updateStepUI();
+  gsap.fromTo('#btnLang', {scale: 0.85}, {scale: 1, duration: 0.3, ease: 'back.out(2)'});
+};
+
+(function initLang() {
+  const saved = localStorage.getItem('mc-circle-lang');
+  if (saved) S.lang = saved;
+})();
+
+// ═══════════════════════════════════════════════════════
+// SIDEBAR TOGGLE (state preserved, just visually hidden)
+// ═══════════════════════════════════════════════════════
+const appEl = document.getElementById('app');
+const sidebarEl = document.getElementById('sidebar');
+document.getElementById('btnToggleSidebar').onclick = () => {
+  S.sidebarOpen = !S.sidebarOpen;
+  appEl.classList.toggle('sidebar-collapsed', !S.sidebarOpen);
+  gsap.to(sidebarEl, {
+    opacity: S.sidebarOpen ? 1 : 0,
+    duration: 0.2,
+    ease: 'power1.out'
+  });
+  const icon = document.getElementById('sidebarToggleIcon');
+  gsap.to(icon, { rotateY: S.sidebarOpen ? 0 : 180, duration: 0.25 });
+  // resize canvas after transition
+  setTimeout(render, 260);
+};
+
+// ═══════════════════════════════════════════════════════
+// CIRCLE ALGORITHMS
+// ═══════════════════════════════════════════════════════
+function insideEllipse(x, z, rx, rz) {
+  return (x * x) / (rx * rx) + (z * z) / (rz * rz) <= 1;
+}
+
+function buildBlocks(rx, rz, mode, thickness) {
+  const set = new Set();
+  const add = (x, z) => set.add(`${x},${z}`);
+
+  if (mode === 'filled') {
+    for (let z = -rz; z <= rz; z++)
+      for (let x = -rx; x <= rx; x++)
+        if (insideEllipse(x, z, rx, rz)) add(x, z);
+    return setToArr(set);
+  }
+
+  if (mode === 'thin') {
+    for (let z = -rz; z <= rz; z++) {
+      for (let x = -rx; x <= rx; x++) {
+        if (!insideEllipse(x, z, rx, rz)) continue;
+        const onEdge = [[x+1,z],[x-1,z],[x,z+1],[x,z-1]]
+          .some(([nx,nz]) => !insideEllipse(nx, nz, rx, rz));
+        if (onEdge) add(x, z);
+      }
+    }
+    return setToArr(set);
+  }
+
+  if (mode === 'thick') {
+    const t = Math.max(1, thickness);
+    const irx = Math.max(0.1, rx - t);
+    const irz = Math.max(0.1, rz - t);
+    for (let z = -rz; z <= rz; z++) {
+      for (let x = -rx; x <= rx; x++) {
+        if (!insideEllipse(x, z, rx, rz)) continue;
+        if (!insideEllipse(x, z, irx, irz)) add(x, z);
+      }
+    }
+    return setToArr(set);
+  }
+  return [];
+}
+
+function setToArr(s) {
+  return [...s].map(k => { const [x,z] = k.split(',').map(Number); return {x,z}; });
+}
+
+// ═══════════════════════════════════════════════════════
+// STEP BUILDER – dynamic, based on angle sectors
+// ═══════════════════════════════════════════════════════
+function buildSteps(blocks, numSteps, blocksPerStep) {
+  if (blocks.length === 0) return [];
+
+  let n = numSteps;
+
+  if (blocksPerStep > 0) {
+    n = Math.max(2, Math.round(blocks.length / blocksPerStep));
+    n = Math.min(n, 64);
+  }
+
+  const steps = Array.from({length: n}, () => []);
+
+  blocks.forEach(b => {
+    let angle = Math.atan2(b.z, b.x);
+    if (angle < 0) angle += 2 * Math.PI;
+    const idx = Math.min(n - 1, Math.floor((angle / (2 * Math.PI)) * n));
+    steps[idx].push(b);
+  });
+
+  return steps.filter(s => s.length > 0);
+}
+
+// ═══════════════════════════════════════════════════════
+// ZOOM BOUNDS — min shows whole chunk-area, max shows 1 chunk
+// ═══════════════════════════════════════════════════════
+function recalcZoomBounds() {
+  const W = canvasArea.clientWidth || 800;
+  const H = canvasArea.clientHeight || 600;
+
+  // total chunk-span the current shape occupies (in blocks, rounded up to chunk multiples)
+  const chunkSpanX = Math.ceil((S.rx * 2 + 1) / 16) * 16;
+  const chunkSpanZ = Math.ceil((S.rz * 2 + 1) / 16) * 16;
+  const span = Math.max(chunkSpanX, chunkSpanZ) + 16; // small padding of 1 chunk
+
+  // MIN zoom: fit entire chunk-bounding-area in viewport
+  const minFit = Math.floor(Math.min(W, H) / span);
+  S.minZoom = Math.max(1, Math.min(minFit, 8));
+
+  // MAX zoom: viewport shows just one chunk (16 blocks) on the shorter side
+  const maxFit = Math.floor(Math.min(W, H) / 16);
+  S.maxZoom = Math.max(S.minZoom + 1, Math.min(maxFit, 96));
+
+  S.zoom = Math.max(S.minZoom, Math.min(S.maxZoom, S.zoom));
+}
+
+// ═══════════════════════════════════════════════════════
+// CANVAS RENDERING
+// ═══════════════════════════════════════════════════════
+const cvs = document.getElementById('cvs');
+const ctx = cvs.getContext('2d');
+const canvasArea = document.getElementById('canvasArea');
+
+function toCanvas(worldX, worldZ) {
+  return [
+    S.panX + (worldX * S.zoom),
+    S.panY + (worldZ * S.zoom)
+  ];
+}
+
+function readCssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function render() {
+  const W = canvasArea.clientWidth;
+  const H = canvasArea.clientHeight;
+  if (W <= 0 || H <= 0) return;
+
+  cvs.width = W;
+  cvs.height = H;
+  const p = S.zoom;
+  const isLight = S.theme === 'light';
+
+  ctx.fillStyle = isLight ? '#f0f0f2' : '#0a0a0f';
+  ctx.fillRect(0, 0, W, H);
+
+  const startWX = Math.floor(-S.panX / p) - 1;
+  const endWX   = Math.ceil((W - S.panX) / p) + 1;
+  const startWZ = Math.floor(-S.panY / p) - 1;
+  const endWZ   = Math.ceil((H - S.panY) / p) + 1;
+
+  // CHUNK GRID
+  if (S.showChunk) {
+    const cStart = Math.floor(startWX / 16) * 16;
+    const cEnd   = Math.ceil(endWX / 16) * 16;
+    const rStart = Math.floor(startWZ / 16) * 16;
+    const rEnd   = Math.ceil(endWZ / 16) * 16;
+
+    ctx.strokeStyle = isLight ? 'rgba(37,99,235,0.10)' : 'rgba(59,130,246,0.12)';
+    ctx.lineWidth = 0.5;
+    for (let cx = cStart; cx <= cEnd; cx += 16) {
+      const [sx] = toCanvas(cx, 0);
+      ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, H); ctx.stroke();
+    }
+    for (let cz = rStart; cz <= rEnd; cz += 16) {
+      const [, sz] = toCanvas(0, cz);
+      ctx.beginPath(); ctx.moveTo(0, sz); ctx.lineTo(W, sz); ctx.stroke();
+    }
+
+    ctx.strokeStyle = isLight ? 'rgba(37,99,235,0.4)' : 'rgba(59,130,246,0.45)';
+    ctx.lineWidth = 1;
+    for (let cx = cStart; cx <= cEnd; cx += 16) {
+      const [sx] = toCanvas(cx, 0);
+      ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, H); ctx.stroke();
+    }
+    for (let cz = rStart; cz <= rEnd; cz += 16) {
+      const [, sz] = toCanvas(0, cz);
+      ctx.beginPath(); ctx.moveTo(0, sz); ctx.lineTo(W, sz); ctx.stroke();
+    }
+
+    if (p >= 4) {
+      ctx.fillStyle = isLight ? 'rgba(37,99,235,0.45)' : 'rgba(59,130,246,0.4)';
+      ctx.font = `${Math.max(9, Math.min(11, p * 0.7))}px Roboto Mono, monospace`;
+      for (let cx = cStart; cx <= cEnd; cx += 16) {
+        for (let cz = rStart; cz <= rEnd; cz += 16) {
+          const [sx, sz] = toCanvas(cx + 0.5, cz + 0.5);
+          ctx.fillText(`${cx/16},${cz/16}`, sx + 2, sz + 11);
+        }
+      }
+    }
+  }
+
+  // BLOCK GRID
+  if (S.showGrid && p >= 6) {
+    ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.035)';
+    ctx.lineWidth = 0.5;
+    for (let gx = startWX; gx <= endWX; gx++) {
+      const [sx] = toCanvas(gx, 0);
+      ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, H); ctx.stroke();
+    }
+    for (let gz = startWZ; gz <= endWZ; gz++) {
+      const [, sz] = toCanvas(0, gz);
+      ctx.beginPath(); ctx.moveTo(0, sz); ctx.lineTo(W, sz); ctx.stroke();
+    }
+  }
+
+  // BLOCKS
+  const stepSet = new Set();
+  if (S.currentStep >= 0 && S.currentStep < S.steps.length) {
+    S.steps[S.currentStep].forEach(b => stepSet.add(`${b.x},${b.z}`));
+  }
+  const doneBlockSet = new Set();
+  S.doneSteps.forEach(i => {
+    if (S.steps[i]) S.steps[i].forEach(b => doneBlockSet.add(`${b.x},${b.z}`));
+  });
+
+  if (S.showStepOnly && S.currentStep >= 0) {
+    S.steps[S.currentStep].forEach(b => {
+      const [sx, sz] = toCanvas(b.x, b.z);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(sx, sz, p, p);
+      if (p >= 6) {
+        ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.4)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(sx, sz, p, p);
+      }
+    });
+  } else {
+    S.blocks.forEach(b => {
+      const [sx, sz] = toCanvas(b.x, b.z);
+      const key = `${b.x},${b.z}`;
+      const isCurrentStep = stepSet.has(key);
+      const isDone = doneBlockSet.has(key);
+
+      if (S.currentStep === -1 && S.doneSteps.size === 0) {
+        ctx.fillStyle = '#22c55e';
+      } else if (isCurrentStep) {
+        ctx.fillStyle = '#f59e0b';
+      } else if (isDone) {
+        ctx.fillStyle = '#16532a';
+      } else {
+        ctx.fillStyle = isLight ? '#c8e6c9' : '#2d4a2d';
+      }
+
+      ctx.fillRect(sx, sz, p, p);
+
+      if (p >= 6) {
+        ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.1)' : 'rgba(0,0,0,0.35)';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(sx, sz, p, p);
+      }
+    });
+  }
+
+  // SIZE BOUNDS FRAME (chunk or block depending on unit)
+  if (S.showBounds) {
+    let bx0, bz0, bx1, bz1;
+    if (S.unitMode === 'chunk') {
+      // snap bounding box outward to chunk boundaries
+      bx0 = Math.floor((-S.rx) / 16) * 16;
+      bz0 = Math.floor((-S.rz) / 16) * 16;
+      bx1 = Math.ceil((S.rx + 1) / 16) * 16;
+      bz1 = Math.ceil((S.rz + 1) / 16) * 16;
+    } else {
+      bx0 = -S.rx; bz0 = -S.rz; bx1 = S.rx + 1; bz1 = S.rz + 1;
+    }
+    const [sx0, sz0] = toCanvas(bx0, bz0);
+    const [sx1, sz1] = toCanvas(bx1, bz1);
+    ctx.save();
+    ctx.strokeStyle = readCssVar('--bounds-color') || '#d946ef';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(sx0, sz0, sx1 - sx0, sz1 - sz0);
+    ctx.restore();
+
+    // label
+    ctx.font = '10px Roboto Mono, monospace';
+    const label = S.unitMode === 'chunk'
+      ? `${Math.round((bx1-bx0)/16)}×${Math.round((bz1-bz0)/16)} chunk`
+      : `${bx1-bx0}×${bz1-bz0} block`;
+    const tw = ctx.measureText(label).width;
+    ctx.fillStyle = readCssVar('--bounds-color') || '#d946ef';
+    ctx.fillRect(sx0, sz0 - 16, tw + 10, 14);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(label, sx0 + 5, sz0 - 5);
+  }
+
+  // COORDINATE LABELS
+  if (S.showCoord && p >= 14) {
+    ctx.font = `${Math.max(8, p * 0.45)}px Roboto Mono, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    S.blocks.forEach(b => {
+      const [sx, sz] = toCanvas(b.x + 0.5, b.z + 0.5);
+      if (sx < -p || sx > W + p || sz < -p || sz > H + p) return;
+      ctx.fillStyle = isLight ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.7)';
+      ctx.fillText(`${b.x},${b.z}`, sx, sz);
+    });
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // CENTER MARKER
+  if (S.showCenter) {
+    const [cx, cz] = toCanvas(0, 0);
+    ctx.strokeStyle = 'rgba(239,68,68,0.8)';
+    ctx.lineWidth = 1.5;
+    const arm = Math.max(p, 12);
+    ctx.beginPath(); ctx.moveTo(cx - arm, cz); ctx.lineTo(cx + arm, cz); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cz - arm); ctx.lineTo(cx, cz + arm); ctx.stroke();
+    ctx.fillStyle = 'rgba(239,68,68,0.9)';
+    ctx.beginPath(); ctx.arc(cx, cz, 2.5, 0, Math.PI * 2); ctx.fill();
+  }
+
+  document.getElementById('hudZoom').textContent = `zoom: ${p}px/blk`;
+  document.getElementById('zoomLevel').textContent = p;
+  document.getElementById('hudOffset').textContent = `pan: ${Math.round(-S.panX/p)}, ${Math.round(-S.panY/p)}`;
+
+  updateZoomButtonStates();
+}
+
+function updateZoomButtonStates() {
+  document.getElementById('btnZoomIn').classList.toggle('disabled', S.zoom >= S.maxZoom);
+  document.getElementById('btnZoomOut').classList.toggle('disabled', S.zoom <= S.minZoom);
+}
+
+// ═══════════════════════════════════════════════════════
+// DATA UPDATE
+// ═══════════════════════════════════════════════════════
+function update() {
+  S.blocks = buildBlocks(S.rx, S.rz, S.mode, S.thickness);
+
+  const targetN = parseInt(document.getElementById('numSteps').value) || 8;
+  const targetBPS = parseInt(document.getElementById('blocksPerStep').value) || 0;
+  S.steps = buildSteps(S.blocks, targetN, targetBPS);
+
+  if (S.currentStep >= S.steps.length) S.currentStep = -1;
+  S.doneSteps.forEach(i => { if (i >= S.steps.length) S.doneSteps.delete(i); });
+
+  recalcZoomBounds();
+  updateStats();
+  updateStepUI();
+  updateCommands();
+  render();
+}
+
+function updateStats() {
+  document.getElementById('statBlocks').textContent = S.blocks.length;
+  document.getElementById('statDiam').textContent = `${S.rx*2+1}×${S.rz*2+1}`;
+
+  const chunkSet = new Set();
+  S.blocks.forEach(b => chunkSet.add(`${Math.floor(b.x/16)},${Math.floor(b.z/16)}`));
+  document.getElementById('statChunks').textContent = chunkSet.size;
+
+  const cs = S.currentStep;
+  if (cs >= 0 && cs < S.steps.length) {
+    document.getElementById('statStepBlocks').textContent = S.steps[cs].length;
+    document.getElementById('statStepOf').textContent = `${cs+1}/${S.steps.length}`;
+  } else {
+    document.getElementById('statStepBlocks').textContent = '–';
+    document.getElementById('statStepOf').textContent = `0/${S.steps.length}`;
+  }
+
+  // Stacks
+  const stackSize = Math.max(1, parseInt(document.getElementById('stackSize').value) || 64);
+  const total = S.blocks.length;
+  const fullStacks = Math.floor(total / stackSize);
+  const remainder = total % stackSize;
+  const stacksNeeded = Math.ceil(total / stackSize);
+  document.getElementById('statStacks').textContent = stacksNeeded;
+  const d = dict[S.lang];
+  document.getElementById('statStacksSub').textContent = `${fullStacks} ${d.fullText} ${remainder} ${d.remText} ${total})`;
+}
+
+function updateStepUI() {
+  const grid = document.getElementById('stepGrid');
+  const old = grid.children.length;
+  const newN = S.steps.length;
+
+  while (grid.children.length > newN) grid.removeChild(grid.lastChild);
+  while (grid.children.length < newN) {
+    const chip = document.createElement('div');
+    chip.className = 'step-chip';
+    const i = grid.children.length;
+    chip.textContent = i + 1;
+    chip.onclick = () => toggleStep(i);
+    grid.appendChild(chip);
+    if (i >= old) {
+      gsap.from(chip, { scale: 0.6, opacity: 0, duration: 0.2, ease: 'back.out(2)', delay: (i - old) * 0.02 });
+    }
+  }
+
+  [...grid.children].forEach((chip, i) => {
+    chip.textContent = i + 1;
+    chip.onclick = () => toggleStep(i);
+    chip.className = 'step-chip' +
+      (S.currentStep === i ? ' active' : '') +
+      (S.doneSteps.has(i) ? ' done' : '');
+  });
+
+  const d = dict[S.lang];
+  document.getElementById('stepInfo').textContent = `${S.steps.length} ${d.stepsText} · ${S.blocks.length} blocks`;
+
+  const hudStep = document.getElementById('hudStep');
+  if (S.currentStep >= 0) {
+    hudStep.style.display = 'flex';
+    hudStep.textContent = `Step ${S.currentStep + 1} / ${S.steps.length}`;
+    gsap.from(hudStep, { y: -6, opacity: 0, duration: 0.2 });
+  } else {
+    hudStep.style.display = 'none';
+  }
+}
+
+function toggleStep(i) {
+  if (S.currentStep === i) {
+    S.doneSteps.add(i);
+    S.currentStep = -1;
+  } else {
+    S.currentStep = i;
+  }
+  updateStats();
+  updateStepUI();
+  updateCommands();
+  render();
+}
+
+// ═══════════════════════════════════════════════════════
+// COMMANDS GENERATOR
+// ═══════════════════════════════════════════════════════
+function updateCommands() {
+  const mat = document.getElementById('blockMaterial').value || 'stone';
+  const y = parseInt(document.getElementById('yLevel').value) || 64;
+  const blocks = S.currentStep >= 0 && S.steps[S.currentStep]
+    ? S.steps[S.currentStep]
+    : S.blocks;
+
+  const lines = blocks.slice(0, 50).map(b => `/setblock ${b.x} ${y} ${b.z} ${mat}`);
+  if (blocks.length > 50) lines.push(`... +${blocks.length - 50} more`);
+  document.getElementById('cmdJava').textContent = lines.join('\n') || '–';
+}
+
+function getAllCommands() {
+  const mat = document.getElementById('blockMaterial').value || 'stone';
+  const y = parseInt(document.getElementById('yLevel').value) || 64;
+  return S.blocks.map(b => `/setblock ${b.x} ${y} ${b.z} ${mat}`).join('\n');
+}
+
+function exportCoordsTxt() {
+  const mat = document.getElementById('blockMaterial').value || 'stone';
+  const y = parseInt(document.getElementById('yLevel').value) || 64;
+  const stackSize = Math.max(1, parseInt(document.getElementById('stackSize').value) || 64);
+  const stacksNeeded = Math.ceil(S.blocks.length / stackSize);
+
+  let txt = `# Minecraft Circle Builder Export\n# Radius: ${S.rx}x${S.rz} | Mode: ${S.mode} | Blocks: ${S.blocks.length}\n# Stacks needed (${stackSize}/stack): ${stacksNeeded}\n\n`;
+
+  if (S.steps.length > 0) {
+    S.steps.forEach((step, i) => {
+      txt += `## Step ${i + 1} (${step.length} blocks)\n`;
+      step.forEach(b => txt += `/setblock ${b.x} ${y} ${b.z} ${mat}\n`);
+      txt += '\n';
+    });
+  } else {
+    txt += S.blocks.map(b => `/setblock ${b.x} ${y} ${b.z} ${mat}`).join('\n');
+  }
+
+  const blob = new Blob([txt], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `circle_r${S.rx}x${S.rz}_${S.mode}.txt`;
+  a.click();
+  toast(dict[S.lang].toastExport);
+}
+
+// ═══════════════════════════════════════════════════════
+// PAN & ZOOM
+// ═══════════════════════════════════════════════════════
+function centerView() {
+  const W = canvasArea.clientWidth;
+  const H = canvasArea.clientHeight;
+  S.panX = W / 2;
+  S.panY = H / 2;
+}
+
+function fitToView() {
+  const W = canvasArea.clientWidth;
+  const H = canvasArea.clientHeight;
+  const margin = 40;
+  const diam = Math.max(S.rx, S.rz) * 2 + 4;
+  const maxPx = Math.min(W - margin * 2, H - margin * 2);
+  const ideal = Math.floor(maxPx / diam);
+  recalcZoomBounds();
+  S.zoom = Math.max(S.minZoom, Math.min(S.maxZoom, ideal));
+  centerView();
+  render();
+  gsap.from(cvs, { opacity: 0.5, duration: 0.3 });
+}
+
+function zoomAt(delta, cx, cy) {
+  const oldZ = S.zoom;
+  S.zoom = Math.max(S.minZoom, Math.min(S.maxZoom, S.zoom + delta));
+  if (S.zoom === oldZ) return;
+  S.panX = cx - (cx - S.panX) * (S.zoom / oldZ);
+  S.panY = cy - (cy - S.panY) * (S.zoom / oldZ);
+  render();
+}
+
+canvasArea.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = canvasArea.getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
+  const delta = e.deltaY < 0 ? 1 : -1;
+  zoomAt(delta, cx, cy);
+}, { passive: false });
+
+let isPanning = false, panStart = {x:0,y:0}, panOrig = {x:0,y:0};
+canvasArea.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  isPanning = true;
+  panStart = {x: e.clientX, y: e.clientY};
+  panOrig = {x: S.panX, y: S.panY};
+});
+window.addEventListener('mousemove', e => {
+  if (!isPanning) {
+    const rect = canvasArea.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const wx = Math.floor((mx - S.panX) / S.zoom);
+    const wz = Math.floor((my - S.panY) / S.zoom);
+    const hud = document.getElementById('hudCoord');
+    if (hud) hud.textContent = `x:${wx} z:${wz}`;
+    return;
+  }
+  S.panX = panOrig.x + (e.clientX - panStart.x);
+  S.panY = panOrig.y + (e.clientY - panStart.y);
+  render();
+});
+window.addEventListener('mouseup', () => { isPanning = false; });
+
+let touchStart = null;
+canvasArea.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    touchStart = {x: e.touches[0].clientX, y: e.touches[0].clientY, px: S.panX, py: S.panY};
+  }
+});
+canvasArea.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 1 && touchStart) {
+    S.panX = touchStart.px + (e.touches[0].clientX - touchStart.x);
+    S.panY = touchStart.py + (e.touches[0].clientY - touchStart.y);
+    render();
+  }
+}, {passive: false});
+canvasArea.addEventListener('touchend', () => { touchStart = null; });
+
+document.getElementById('btnZoomIn').onclick = () => {
+  zoomAt(2, canvasArea.clientWidth/2, canvasArea.clientHeight/2);
+};
+document.getElementById('btnZoomOut').onclick = () => {
+  zoomAt(-2, canvasArea.clientWidth/2, canvasArea.clientHeight/2);
+};
+document.getElementById('btnZoomFit').onclick = fitToView;
+document.getElementById('btnResetView').onclick = () => { centerView(); render(); };
+
+// ═══════════════════════════════════════════════════════
+// UI BINDINGS
+// ═══════════════════════════════════════════════════════
+function getActualRadius(inputVal, unit) {
+  const v = parseInt(inputVal) || 1;
+  return unit === 'chunk' ? v * 16 : v;
+}
+
+document.getElementById('radX').oninput = e => {
+  S.rx = getActualRadius(e.target.value, S.unitMode);
+  if (S.syncRadii) {
+    document.getElementById('radZ').value = e.target.value;
+    S.rz = S.rx;
+  }
+  updateRadiusDisplay();
+  update();
+};
+document.getElementById('radZ').oninput = e => {
+  S.rz = getActualRadius(e.target.value, S.unitMode);
+  updateRadiusDisplay();
+  update();
+};
+
+function updateRadiusDisplay() {
+  const u = S.unitMode;
+  document.getElementById('unitX').textContent = u === 'chunk' ? 'chk' : 'blk';
+  document.getElementById('unitZ').textContent = u === 'chunk' ? 'chk' : 'blk';
+  document.getElementById('radXDisplay').textContent = u === 'chunk' ? `= ${S.rx}blk` : '';
+  document.getElementById('radZDisplay').textContent = u === 'chunk' ? `= ${S.rz}blk` : '';
+}
+
+document.getElementById('unitMode').onchange = e => {
+  S.unitMode = e.target.value;
+  const curX = parseInt(document.getElementById('radX').value) || 1;
+  const curZ = parseInt(document.getElementById('radZ').value) || 1;
+  if (S.unitMode === 'chunk') {
+    document.getElementById('radX').value = Math.max(1, Math.round(curX / 16));
+    document.getElementById('radZ').value = Math.max(1, Math.round(curZ / 16));
+  } else {
+    document.getElementById('radX').value = Math.round(curX * 16);
+    document.getElementById('radZ').value = Math.round(curZ * 16);
+  }
+  S.rx = getActualRadius(document.getElementById('radX').value, S.unitMode);
+  S.rz = getActualRadius(document.getElementById('radZ').value, S.unitMode);
+  updateRadiusDisplay();
+  update();
+};
+
+document.getElementById('syncRadii').onclick = () => {
+  S.syncRadii = !S.syncRadii;
+  document.getElementById('swSync').classList.toggle('on', S.syncRadii);
+  if (S.syncRadii) {
+    document.getElementById('radZ').value = document.getElementById('radX').value;
+    S.rz = S.rx;
+    update();
+  }
+};
+
+document.getElementById('togBounds').onclick = () => {
+  S.showBounds = !S.showBounds;
+  document.getElementById('swBounds').classList.toggle('on', S.showBounds);
+  render();
+};
+
+document.querySelectorAll('.seg-tab').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.seg-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    S.mode = btn.dataset.mode;
+    document.getElementById('thickCtrl').style.display = S.mode === 'thick' ? 'block' : 'none';
+    gsap.from(btn, { scale: 0.9, duration: 0.2, ease: 'back.out(2)' });
+    update();
+  };
+});
+
+document.getElementById('thickness').oninput = e => {
+  S.thickness = parseInt(e.target.value) || 2;
+  update();
+};
+
+document.getElementById('numSteps').oninput = () => update();
+document.getElementById('blocksPerStep').oninput = () => update();
+document.getElementById('stackSize').oninput = () => updateStats();
+
+document.getElementById('btnPrev').onclick = () => {
+  S.currentStep = S.currentStep <= 0 ? S.steps.length - 1 : S.currentStep - 1;
+  updateStats(); updateStepUI(); updateCommands(); render();
+};
+document.getElementById('btnNext').onclick = () => {
+  S.currentStep = S.currentStep >= S.steps.length - 1 ? 0 : S.currentStep + 1;
+  updateStats(); updateStepUI(); updateCommands(); render();
+};
+document.getElementById('btnAll').onclick = () => {
+  S.currentStep = -1; S.doneSteps.clear();
+  updateStats(); updateStepUI(); updateCommands(); render();
+};
+
+function mkToggle(rowId, swId, key) {
+  const row = document.getElementById(rowId);
+  const sw = document.getElementById(swId);
+  row.onclick = () => {
+    S[key] = !S[key];
+    sw.classList.toggle('on', S[key]);
+    render();
+  };
+}
+mkToggle('togGrid', 'swGrid', 'showGrid');
+mkToggle('togChunk', 'swChunk', 'showChunk');
+mkToggle('togCenter', 'swCenter', 'showCenter');
+mkToggle('togCoord', 'swCoord', 'showCoord');
+mkToggle('togStepOnly', 'swStepOnly', 'showStepOnly');
+
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'ArrowRight' || e.key === 'd') document.getElementById('btnNext').click();
+  if (e.key === 'ArrowLeft' || e.key === 'a') document.getElementById('btnPrev').click();
+  if (e.key === ' ') { e.preventDefault(); document.getElementById('btnAll').click(); }
+  if (e.key === '+' || e.key === '=') zoomAt(1, canvasArea.clientWidth/2, canvasArea.clientHeight/2);
+  if (e.key === '-') zoomAt(-1, canvasArea.clientWidth/2, canvasArea.clientHeight/2);
+  if (e.key === 'f') fitToView();
+  if (e.key === 'b') document.getElementById('btnToggleSidebar').click();
+  if (e.key === 't') document.getElementById('btnTheme').click();
+});
+
+document.getElementById('btnExportCoords').onclick = exportCoordsTxt;
+document.getElementById('btnExportTxt').onclick = exportCoordsTxt;
+document.getElementById('btnCopyJava').onclick = () => {
+  const txt = getAllCommands();
+  navigator.clipboard.writeText(txt).then(() => toast(dict[S.lang].toastCopy));
+};
+
+document.getElementById('blockMaterial').oninput = updateCommands;
+document.getElementById('yLevel').oninput = updateCommands;
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function toast(msg) {
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${msg}`;
+  wrap.appendChild(t);
+  gsap.to(t, { opacity: 1, y: 0, duration: 0.25, ease: 'power2.out' });
+  gsap.to(t, { opacity: 0, y: -8, duration: 0.3, delay: 2.2, ease: 'power2.in',
+    onComplete: () => t.remove() });
+}
+
+// ═══════════════════════════════════════════════════════
+// RESIZE OBSERVER
+// ═══════════════════════════════════════════════════════
+const ro = new ResizeObserver(() => { recalcZoomBounds(); render(); });
+ro.observe(canvasArea);
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+setTimeout(() => {
+  updateLangUI();
+  centerView();
+  update();
+  gsap.from('.sidebar', { x: -20, opacity: 0, duration: 0.4, ease: 'power2.out' });
+  gsap.from('.topbar', { y: -10, opacity: 0, duration: 0.35, ease: 'power2.out' });
+  gsap.from(cvs, { opacity: 0, duration: 0.5, delay: 0.2 });
+}, 50);
+</script>
+</body>
+</html>
