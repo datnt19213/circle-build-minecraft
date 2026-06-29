@@ -659,10 +659,17 @@ select option { background: var(--bg-input); color: var(--text); }
       </div>
 
       <div class="field">
-        <div class="field-label">Đơn vị đo</div>
+        <div class="field-label" data-i18n="unit">Đơn vị đo</div>
         <select id="unitMode">
-          <option value="block">Block (số lượng)</option>
-          <option value="chunk">Chunk (×16 blocks)</option>
+          <option value="block" data-i18n="unitBlock">Block (số lượng)</option>
+          <option value="chunk" data-i18n="unitChunk">Chunk (×16 blocks)</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="field-label" data-i18n="measureType">Loại kích thước</div>
+        <select id="measureType">
+          <option value="radius" data-i18n="measureRad">Bán kính (Radius)</option>
+          <option value="diameter" data-i18n="measureDia">Đường kính (Diameter)</option>
         </select>
       </div>
 
@@ -726,12 +733,45 @@ select option { background: var(--bg-input); color: var(--text); }
       <!-- thickness for thick mode -->
       <div id="thickCtrl" style="margin-top:8px;display:none">
         <div class="field">
-          <div class="field-label">Độ dày ring (blocks)</div>
+          <div class="field-label" data-i18n="thickRing">Độ dày ring (blocks)</div>
           <div class="field-row">
             <input type="number" id="thickness" value="2" min="1" max="32">
             <div class="input-unit">blk</div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- CYLINDER & LAYERS -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span data-i18n="cylTitle"> Hình trụ & Layer</span>
+      </div>
+      <div class="field">
+        <div class="field-label" data-i18n="height">Chiều cao (Y layers)</div>
+        <div class="field-row">
+          <input type="number" id="cylinderHeight" value="1" min="1" max="320">
+          <div class="input-unit">blk</div>
+        </div>
+      </div>
+      <div class="field" style="margin-top: 8px;">
+        <div class="field-label" data-i18n="materials">Vật liệu cơ bản (Basic blocks)</div>
+        <select id="baseMaterialSelect" multiple style="height: auto; min-height: 80px;" data-i18n-tip="tipMultiMat" data-tip="Nhấn giữ Ctrl để chọn nhiều vật liệu">
+          <option value="stone" selected>Stone</option>
+          <option value="dirt">Dirt</option>
+          <option value="cobblestone">Cobblestone</option>
+          <option value="oak_planks">Oak Planks</option>
+          <option value="glass">Glass</option>
+          <option value="terracotta">Terracotta</option>
+          <option value="hardened_clay">Hardened Clay</option>
+          <option value="netherrack">Netherrack</option>
+        </select>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:4px;" data-i18n="matDesc">Nếu chọn nhiều vật liệu, mỗi layer sẽ dùng tuần tự.</div>
+      </div>
+      <div class="field">
+        <div class="field-label" data-i18n="customMat">Custom Block (nếu có)</div>
+        <input type="text" id="customMaterial" value="" placeholder="e.g. diamond_block" data-i18n-placeholder="customMatPl">
       </div>
     </div>
 
@@ -864,9 +904,14 @@ select option { background: var(--bg-input); color: var(--text); }
         </div>
       </div>
       <div class="stat-card" style="margin-top:8px">
-        <div class="stat-card-label">Số stack cần dùng</div>
+        <div class="stat-card-label" data-i18n="stacksNeeded">Số stack cần dùng</div>
         <div class="stat-card-val" id="statStacks">0</div>
         <div class="stat-card-sub" id="statStacksSub">0 stack + 0 dư</div>
+      </div>
+      <div class="stat-card" style="margin-top:8px">
+        <div class="stat-card-label" data-i18n="chestsNeeded">Rương cần thiết</div>
+        <div class="stat-card-val" id="statChests">0</div>
+        <div class="stat-card-sub" id="statChestsSub">0 rương đơn / 0 rương đôi</div>
       </div>
     </div>
 
@@ -874,31 +919,51 @@ select option { background: var(--bg-input); color: var(--text); }
     <div class="section" style="flex:1">
       <div class="section-title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-        Minecraft Commands
+        <span data-i18n="mcCommands"> Minecraft Commands</span>
       </div>
       <div class="field">
-        <div class="field-label">Vật liệu block</div>
-        <input type="text" id="blockMaterial" value="stone" placeholder="stone, glass, wool...">
+        <div class="field-label" data-i18n="startCoords">Tọa độ bắt đầu (X, Y, Z)</div>
+        <div class="field-row">
+          <input type="number" id="startX" value="0" placeholder="X">
+          <input type="number" id="startY" value="64" placeholder="Y">
+          <input type="number" id="startZ" value="0" placeholder="Z">
+        </div>
       </div>
       <div class="field">
-        <div class="field-label">Y level</div>
-        <input type="number" id="yLevel" value="64" min="-64" max="320">
+        <label class="toggle-row" id="togOneCmd">
+          <span class="toggle-label">One Command (Java)</span>
+          <div class="toggle-sw" id="swOneCmd"></div>
+        </label>
       </div>
       <div class="field">
-        <div class="field-label">Lệnh Java Edition (/setblock)</div>
+        <div class="field-label" data-i18n="cmdOutput">Lệnh (Gom nhóm /fill)</div>
         <div class="cmd-box" id="cmdJava">–</div>
         <button class="btn btn-sm" id="btnCopyJava" style="margin-top:4px;width:100%">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copy Java commands
+          <span data-i18n="copyJava"> Copy Commands</span>
         </button>
       </div>
       <div class="field">
-        <div class="field-label">Tọa độ (export .txt)</div>
+        <div class="field-label" data-i18n="exportCoordsTxt">Tọa độ (export .txt)</div>
         <button class="btn btn-sm btn-accent" id="btnExportTxt" style="width:100%">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download coords.txt
         </button>
       </div>
+    </div>
+
+    <!-- PRESETS -->
+    <div class="section" style="padding-bottom: 20px;">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Presets
+      </div>
+      <div class="field-row">
+        <button class="btn btn-sm" id="btnSaveJson" style="flex:1" data-i18n="saveFile">Lưu File</button>
+        <button class="btn btn-sm" id="btnLoadJson" style="flex:1" data-i18n="loadFile">Tải File</button>
+        <input type="file" id="fileLoad" accept=".json" style="display:none;">
+      </div>
+      <button class="btn btn-sm" id="btnShareLink" style="width:100%;margin-top:4px;" data-i18n="copyLink">Copy Link Share</button>
     </div>
 
   </aside>
@@ -948,6 +1013,7 @@ select option { background: var(--bg-input); color: var(--text); }
 // ═══════════════════════════════════════════════════════
 const S = {
   rx: 16, rz: 16,
+  measureType: 'radius',
   lang: 'vi',
   mode: 'thin',
   thickness: 2,
@@ -955,6 +1021,11 @@ const S = {
   unitMode: 'block',
   numSteps: 8,
   blocksPerStep: 0,
+  cylHeight: 1,
+  materials: ['stone'],
+  customMat: '',
+  startX: 0, startY: 64, startZ: 0,
+  oneCmd: false,
   showGrid: true,
   showChunk: true,
   showCenter: true,
@@ -969,8 +1040,6 @@ const S = {
   blocks: [],
   steps: [],
   doneSteps: new Set(),
-  material: 'stone',
-  yLevel: 64,
   stackSize: 64,
   sidebarOpen: true,
   theme: 'dark',
@@ -1006,6 +1075,9 @@ const dict = {
     langToggle: "Đổi ngôn ngữ",
     size: "Kích thước",
     unit: "Đơn vị đo",
+    measureType: "Loại kích thước",
+    measureRad: "Bán kính (Radius)",
+    measureDia: "Đường kính (Diameter)",
     unitBlock: "Block (số lượng)",
     unitChunk: "Chunk (×16 blocks)",
     syncRadii: "Đồng bộ X = Z",
@@ -1016,6 +1088,12 @@ const dict = {
     blocksPerStep: "Blocks / bước (mục tiêu)",
     autoTarget: "0 = tự chia đều · Nhập số để ưu tiên blocks/bước",
     autoPlaceholder: "Tự động",
+    cylTitle: " Hình trụ & Layer",
+    height: "Chiều cao (Y layers)",
+    materials: "Vật liệu cơ bản (Basic blocks)",
+    customMat: "Custom Block (nếu có)",
+    customMatPl: "e.g. diamond_block",
+    matDesc: "Nếu chọn nhiều vật liệu, mỗi layer sẽ dùng tuần tự.",
     display: "Hiển thị",
     blockCoords: "Tọa độ block",
     stepOnly: "Chỉ hiện bước hiện tại",
@@ -1024,16 +1102,23 @@ const dict = {
     stepOf: "Bước / tổng",
     stackSize: "Stack size (mỗi stack 64)",
     stacksNeeded: "Số stack cần dùng",
-    material: "Vật liệu block",
-    javaCmd: "Lệnh Java Edition (/setblock)",
-    copyJava: "Copy Java commands",
+    chestsNeeded: "Rương cần thiết",
+    startCoords: "Tọa độ bắt đầu (X, Y, Z)",
+    cmdOutput: "Lệnh (Gom nhóm /fill)",
+    mcCommands: " Minecraft Commands",
+    copyJava: " Copy Commands",
     exportCoordsTxt: "Tọa độ (export .txt)",
+    saveFile: "Lưu File",
+    loadFile: "Tải File",
+    copyLink: "Copy Link Share",
     zoomOut: "Zoom out (min: toàn bộ chunk)",
     fullText: "đầy +",
     remText: "dư (tổng",
     stepsText: "bước",
-    toastCopy: "Đã copy lệnh Java!",
-    toastExport: "Đã xuất file coords.txt"
+    toastCopy: "Đã copy lệnh!",
+    toastExport: "Đã xuất file coords.txt",
+    toastSave: "Đã copy link share!",
+    tipMultiMat: "Nhấn giữ Ctrl để chọn nhiều vật liệu"
   },
   en: {
     sidebarToggle: "Toggle sidebar",
@@ -1041,6 +1126,9 @@ const dict = {
     langToggle: "Change language",
     size: "Size",
     unit: "Measurement unit",
+    measureType: "Dimension type",
+    measureRad: "Radius",
+    measureDia: "Diameter",
     unitBlock: "Block (count)",
     unitChunk: "Chunk (×16 blocks)",
     syncRadii: "Sync X = Z",
@@ -1051,6 +1139,12 @@ const dict = {
     blocksPerStep: "Blocks / step (target)",
     autoTarget: "0 = auto divide · Enter number to prioritize",
     autoPlaceholder: "Auto",
+    cylTitle: " Cylinder & Layers",
+    height: "Height (Y layers)",
+    materials: "Basic materials",
+    customMat: "Custom Block (optional)",
+    customMatPl: "e.g. diamond_block",
+    matDesc: "Multiple materials will repeat sequentially per layer.",
     display: "Display",
     blockCoords: "Block coordinates",
     stepOnly: "Show current step only",
@@ -1059,16 +1153,23 @@ const dict = {
     stepOf: "Step / Total",
     stackSize: "Stack size (64 per stack)",
     stacksNeeded: "Stacks needed",
-    material: "Block material",
-    javaCmd: "Java Edition command (/setblock)",
-    copyJava: "Copy Java commands",
+    chestsNeeded: "Chests needed",
+    startCoords: "Start coordinates (X, Y, Z)",
+    cmdOutput: "Command Output (/fill grouped)",
+    mcCommands: " Minecraft Commands",
+    copyJava: " Copy Commands",
     exportCoordsTxt: "Coordinates (export .txt)",
+    saveFile: "Save JSON",
+    loadFile: "Load JSON",
+    copyLink: "Copy Share Link",
     zoomOut: "Zoom out (min: full chunks)",
     fullText: "full +",
     remText: "remainder (total",
     stepsText: "steps",
-    toastCopy: "Copied Java commands!",
-    toastExport: "Exported coords.txt"
+    toastCopy: "Copied commands!",
+    toastExport: "Exported coords.txt",
+    toastSave: "Share link copied!",
+    tipMultiMat: "Hold Ctrl to select multiple"
   }
 };
 
@@ -1083,25 +1184,39 @@ function updateLangUI() {
   const sections = document.querySelectorAll('.section-title');
   if(sections[0]) sections[0].lastChild.textContent = ' ' + d.size;
   if(sections[1]) sections[1].lastChild.textContent = ' ' + d.mode;
-  if(sections[4]) sections[4].lastChild.textContent = ' ' + d.display;
-  if(sections[5]) sections[5].lastChild.textContent = ' ' + d.stats;
+  if(sections[3]) sections[3].lastChild.textContent = ' ' + d.display;
+  if(sections[4]) sections[4].lastChild.textContent = ' ' + d.stats;
 
-  const labels = document.querySelectorAll('.field-label');
-  labels.forEach(l => {
-    if(l.textContent.includes('Đơn vị đo') || l.textContent.includes('Measurement unit')) l.textContent = d.unit;
-    if(l.textContent.includes('Độ dày ring') || l.textContent.includes('Ring thickness')) l.textContent = d.thickRing;
-    if(l.textContent.includes('Số bước xây') || l.textContent.includes('Number of steps')) l.textContent = d.numSteps;
-    if(l.textContent.includes('Blocks / bước') || l.textContent.includes('Blocks / step')) l.textContent = d.blocksPerStep;
-    if(l.textContent.includes('0 = tự chia đều') || l.textContent.includes('0 = auto divide')) l.textContent = d.autoTarget;
-    if(l.textContent.includes('Stack size') || l.textContent.includes('Stack size')) l.textContent = d.stackSize;
-    if(l.textContent.includes('Vật liệu block') || l.textContent.includes('Block material')) l.textContent = d.material;
-    if(l.textContent.includes('Lệnh Java') || l.textContent.includes('Java Edition command')) l.textContent = d.javaCmd;
-    if(l.textContent.includes('Tọa độ (export') || l.textContent.includes('Coordinates (export')) l.textContent = d.exportCoordsTxt;
+  // New generic data-i18n replacement
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (d[key]) {
+      // If it's a span or div that has an icon as firstChild, we only want to change the text node.
+      if (el.childNodes.length > 1) {
+        el.lastChild.textContent = ' ' + d[key];
+      } else {
+        el.textContent = d[key];
+      }
+    }
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (d[key]) el.placeholder = d[key];
+  });
+
+  document.querySelectorAll('[data-i18n-tip]').forEach(el => {
+    const key = el.getAttribute('data-i18n-tip');
+    if (d[key]) el.dataset.tip = d[key];
   });
 
   const opts = document.querySelectorAll('#unitMode option');
   if(opts[0]) opts[0].textContent = d.unitBlock;
   if(opts[1]) opts[1].textContent = d.unitChunk;
+  
+  const optsMeasure = document.querySelectorAll('#measureType option');
+  if(optsMeasure[0]) optsMeasure[0].textContent = d.measureRad;
+  if(optsMeasure[1]) optsMeasure[1].textContent = d.measureDia;
 
   const toggles = document.querySelectorAll('.toggle-label');
   toggles.forEach(t => {
@@ -1115,16 +1230,12 @@ function updateLangUI() {
   statCards.forEach(s => {
     if(s.textContent.includes('Step hiện tại') || s.textContent.includes('Current Step')) s.textContent = d.currStep;
     if(s.textContent.includes('Bước / tổng') || s.textContent.includes('Step / Total')) s.textContent = d.stepOf;
-    if(s.textContent.includes('Số stack cần dùng') || s.textContent.includes('Stacks needed')) s.textContent = d.stacksNeeded;
   });
 
   const bps = document.getElementById('blocksPerStep');
   if (bps) bps.placeholder = d.autoPlaceholder;
   const bzo = document.getElementById('btnZoomOut');
   if (bzo) bzo.dataset.tip = d.zoomOut;
-  
-  const copyBtn = document.getElementById('btnCopyJava');
-  if (copyBtn) copyBtn.lastChild.textContent = ' ' + d.copyJava;
 
   // We should NOT call updateStats or updateStepUI here if they rely on layout that's not ready.
   // We'll let `update()` call them directly, or just update the strings if possible.
@@ -1166,46 +1277,51 @@ document.getElementById('btnToggleSidebar').onclick = () => {
 // ═══════════════════════════════════════════════════════
 // CIRCLE ALGORITHMS
 // ═══════════════════════════════════════════════════════
-function insideEllipse(x, z, rx, rz) {
-  return (x * x) / (rx * rx) + (z * z) / (rz * rz) <= 1;
+function insideEllipse(x, z, rx, rz, cx, cz) {
+  const dx = x - cx;
+  const dz = z - cz;
+  return (dx * dx) / (rx * rx) + (dz * dz) / (rz * rz) <= 1;
 }
 
-function buildBlocks(rx, rz, mode, thickness) {
+function buildBlocks(rx, rz, cx, cz, mode, thickness, height) {
   const set = new Set();
   const add = (x, z) => set.add(`${x},${z}`);
+  const minX = Math.ceil(-rx + cx) - 2;
+  const maxX = Math.floor(rx + cx) + 2;
+  const minZ = Math.ceil(-rz + cz) - 2;
+  const maxZ = Math.floor(rz + cz) + 2;
 
   if (mode === 'filled') {
-    for (let z = -rz; z <= rz; z++)
-      for (let x = -rx; x <= rx; x++)
-        if (insideEllipse(x, z, rx, rz)) add(x, z);
-    return setToArr(set);
-  }
-
-  if (mode === 'thin') {
-    for (let z = -rz; z <= rz; z++) {
-      for (let x = -rx; x <= rx; x++) {
-        if (!insideEllipse(x, z, rx, rz)) continue;
+    for (let z = minZ; z <= maxZ; z++)
+      for (let x = minX; x <= maxX; x++)
+        if (insideEllipse(x, z, rx, rz, cx, cz)) add(x, z);
+  } else if (mode === 'thin') {
+    for (let z = minZ; z <= maxZ; z++) {
+      for (let x = minX; x <= maxX; x++) {
+        if (!insideEllipse(x, z, rx, rz, cx, cz)) continue;
         const onEdge = [[x+1,z],[x-1,z],[x,z+1],[x,z-1]]
-          .some(([nx,nz]) => !insideEllipse(nx, nz, rx, rz));
+          .some(([nx,nz]) => !insideEllipse(nx, nz, rx, rz, cx, cz));
         if (onEdge) add(x, z);
       }
     }
-    return setToArr(set);
-  }
-
-  if (mode === 'thick') {
+  } else if (mode === 'thick') {
     const t = Math.max(1, thickness);
     const irx = Math.max(0.1, rx - t);
     const irz = Math.max(0.1, rz - t);
-    for (let z = -rz; z <= rz; z++) {
-      for (let x = -rx; x <= rx; x++) {
-        if (!insideEllipse(x, z, rx, rz)) continue;
-        if (!insideEllipse(x, z, irx, irz)) add(x, z);
+    for (let z = minZ; z <= maxZ; z++) {
+      for (let x = minX; x <= maxX; x++) {
+        if (!insideEllipse(x, z, rx, rz, cx, cz)) continue;
+        if (!insideEllipse(x, z, irx, irz, cx, cz)) add(x, z);
       }
     }
-    return setToArr(set);
   }
-  return [];
+
+  const arr2d = setToArr(set);
+  const blocks3d = [];
+  for (let y = 0; y < height; y++) {
+    arr2d.forEach(b => blocks3d.push({x: b.x, y: y, z: b.z}));
+  }
+  return blocks3d;
 }
 
 function setToArr(s) {
@@ -1339,7 +1455,7 @@ function render() {
 
   // BLOCK GRID
   if (S.showGrid && p >= 6) {
-    ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.035)';
+    ctx.strokeStyle = isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 0.5;
     for (let gx = startWX; gx <= endWX; gx++) {
       const [sx] = toCanvas(gx, 0);
@@ -1402,14 +1518,21 @@ function render() {
   // SIZE BOUNDS FRAME (chunk or block depending on unit)
   if (S.showBounds) {
     let bx0, bz0, bx1, bz1;
-    if (S.unitMode === 'chunk') {
-      // snap bounding box outward to chunk boundaries
-      bx0 = Math.floor((-S.rx) / 16) * 16;
-      bz0 = Math.floor((-S.rz) / 16) * 16;
-      bx1 = Math.ceil((S.rx + 1) / 16) * 16;
-      bz1 = Math.ceil((S.rz + 1) / 16) * 16;
+    if (S.blocks && S.blocks.length > 0) {
+      const minX = Math.min(...S.blocks.map(b => b.x));
+      const maxX = Math.max(...S.blocks.map(b => b.x));
+      const minZ = Math.min(...S.blocks.map(b => b.z));
+      const maxZ = Math.max(...S.blocks.map(b => b.z));
+      if (S.unitMode === 'chunk') {
+        bx0 = Math.floor(minX / 16) * 16;
+        bz0 = Math.floor(minZ / 16) * 16;
+        bx1 = (Math.floor(maxX / 16) + 1) * 16;
+        bz1 = (Math.floor(maxZ / 16) + 1) * 16;
+      } else {
+        bx0 = minX; bz0 = minZ; bx1 = maxX + 1; bz1 = maxZ + 1;
+      }
     } else {
-      bx0 = -S.rx; bz0 = -S.rz; bx1 = S.rx + 1; bz1 = S.rz + 1;
+      bx0 = 0; bz0 = 0; bx1 = 0; bz1 = 0;
     }
     const [sx0, sz0] = toCanvas(bx0, bz0);
     const [sx1, sz1] = toCanvas(bx1, bz1);
@@ -1449,7 +1572,9 @@ function render() {
 
   // CENTER MARKER
   if (S.showCenter) {
-    const [cx, cz] = toCanvas(0, 0);
+    // S.cx and S.cz define the center block index offset.
+    // The continuous geometric center is at S.cx + 0.5, S.cz + 0.5.
+    const [cx, cz] = toCanvas((S.cx || 0) + 0.5, (S.cz || 0) + 0.5);
     ctx.strokeStyle = 'rgba(239,68,68,0.8)';
     ctx.lineWidth = 1.5;
     const arm = Math.max(p, 12);
@@ -1474,8 +1599,40 @@ function updateZoomButtonStates() {
 // ═══════════════════════════════════════════════════════
 // DATA UPDATE
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// DATA UPDATE
+// ═══════════════════════════════════════════════════════
 function update() {
-  S.blocks = buildBlocks(S.rx, S.rz, S.mode, S.thickness);
+  let valX = parseInt(document.getElementById('radX').value) || 1;
+  let valZ = parseInt(document.getElementById('radZ').value) || 1;
+  let rx, rz, cx = 0, cz = 0;
+
+  if (S.measureType === 'diameter') {
+    if (S.unitMode === 'chunk') {
+      rx = (valX * 16) / 2;
+      rz = (valZ * 16) / 2;
+      cx = (valX % 2 === 0) ? -0.5 : 7.5;
+      cz = (valZ % 2 === 0) ? -0.5 : 7.5;
+    } else {
+      rx = valX / 2;
+      rz = valZ / 2;
+      cx = (valX % 2 === 0) ? -0.5 : 0;
+      cz = (valZ % 2 === 0) ? -0.5 : 0;
+    }
+  } else {
+    if (S.unitMode === 'chunk') {
+      rx = valX * 16;
+      rz = valZ * 16;
+      cx = -0.5; cz = -0.5;
+    } else {
+      rx = valX;
+      rz = valZ;
+      cx = 0; cz = 0;
+    }
+  }
+  S.rx = rx; S.rz = rz; S.cx = cx; S.cz = cz;
+  
+  S.blocks = buildBlocks(rx, rz, cx, cz, S.mode, S.thickness, S.cylHeight);
 
   const targetN = parseInt(document.getElementById('numSteps').value) || 8;
   const targetBPS = parseInt(document.getElementById('blocksPerStep').value) || 0;
@@ -1489,11 +1646,14 @@ function update() {
   updateStepUI();
   updateCommands();
   render();
+  syncToURL();
 }
 
 function updateStats() {
   document.getElementById('statBlocks').textContent = S.blocks.length;
-  document.getElementById('statDiam').textContent = `${S.rx*2+1}×${S.rz*2+1}`;
+  const width = Math.floor(S.rx + S.cx) - Math.ceil(-S.rx + S.cx) + 1;
+  const depth = Math.floor(S.rz + S.cz) - Math.ceil(-S.rz + S.cz) + 1;
+  document.getElementById('statDiam').textContent = `${width}×${depth}`;
 
   const chunkSet = new Set();
   S.blocks.forEach(b => chunkSet.add(`${Math.floor(b.x/16)},${Math.floor(b.z/16)}`));
@@ -1508,7 +1668,7 @@ function updateStats() {
     document.getElementById('statStepOf').textContent = `0/${S.steps.length}`;
   }
 
-  // Stacks
+  // Stacks & Chests
   const stackSize = Math.max(1, parseInt(document.getElementById('stackSize').value) || 64);
   const total = S.blocks.length;
   const fullStacks = Math.floor(total / stackSize);
@@ -1517,6 +1677,11 @@ function updateStats() {
   document.getElementById('statStacks').textContent = stacksNeeded;
   const d = dict[S.lang];
   document.getElementById('statStacksSub').textContent = `${fullStacks} ${d.fullText} ${remainder} ${d.remText} ${total})`;
+
+  const singleChests = Math.ceil(stacksNeeded / 27);
+  const doubleChests = Math.ceil(stacksNeeded / 54);
+  document.getElementById('statChests').textContent = singleChests;
+  document.getElementById('statChestsSub').textContent = `${singleChests} đơn / ${doubleChests} đôi`;
 }
 
 function updateStepUI() {
@@ -1574,40 +1739,107 @@ function toggleStep(i) {
 // ═══════════════════════════════════════════════════════
 // COMMANDS GENERATOR
 // ═══════════════════════════════════════════════════════
-function updateCommands() {
-  const mat = document.getElementById('blockMaterial').value || 'stone';
-  const y = parseInt(document.getElementById('yLevel').value) || 64;
-  const blocks = S.currentStep >= 0 && S.steps[S.currentStep]
-    ? S.steps[S.currentStep]
-    : S.blocks;
+function greedyMesh(blocks) {
+  const getMat = (y) => {
+    if (S.customMat) return S.customMat;
+    return S.materials[y % S.materials.length] || 'stone';
+  };
+  
+  const layers = {};
+  blocks.forEach(b => {
+    if (!layers[b.y]) layers[b.y] = [];
+    layers[b.y].push(b);
+  });
+  
+  const fills = [];
+  
+  for (const y in layers) {
+    const layer = layers[y];
+    const mat = getMat(parseInt(y));
+    
+    const minX = Math.min(...layer.map(b => b.x));
+    const maxX = Math.max(...layer.map(b => b.x));
+    const minZ = Math.min(...layer.map(b => b.z));
+    const maxZ = Math.max(...layer.map(b => b.z));
+    
+    const w = maxX - minX + 1;
+    const h = maxZ - minZ + 1;
+    const grid = new Array(w * h).fill(false);
+    layer.forEach(b => { grid[(b.z - minZ) * w + (b.x - minX)] = true; });
+    
+    for (let j = 0; j < h; j++) {
+      for (let i = 0; i < w; i++) {
+        if (grid[j * w + i]) {
+          let ww = 1;
+          while (i + ww < w && grid[j * w + (i + ww)]) ww++;
+          
+          let hh = 1;
+          let canExpand = true;
+          while (j + hh < h && canExpand) {
+            for (let k = 0; k < ww; k++) {
+              if (!grid[(j + hh) * w + (i + k)]) { canExpand = false; break; }
+            }
+            if (canExpand) hh++;
+          }
+          
+          for (let jj = 0; jj < hh; jj++) {
+            for (let ii = 0; ii < ww; ii++) {
+              grid[(j + jj) * w + (i + ii)] = false;
+            }
+          }
+          fills.push({ x1: minX + i, z1: minZ + j, x2: minX + i + ww - 1, z2: minZ + j + hh - 1, y: parseInt(y), mat: mat });
+        }
+      }
+    }
+  }
+  return fills;
+}
 
-  const lines = blocks.slice(0, 50).map(b => `/setblock ${b.x} ${y} ${b.z} ${mat}`);
-  if (blocks.length > 50) lines.push(`... +${blocks.length - 50} more`);
+function generateCommands(blocks) {
+  const fills = greedyMesh(blocks);
+  const bx = S.startX, by = S.startY, bz = S.startZ;
+  
+  if (S.oneCmd) {
+    let cmds = fills.map(f => `fill ${bx + f.x1} ${by + f.y} ${bz + f.z1} ${bx + f.x2} ${by + f.y} ${bz + f.z2} ${f.mat}`);
+    if (cmds.length === 0) return [];
+    let str = "summon falling_block ~ ~1 ~ {Time:1,BlockState:{Name:\"redstone_block\"},Passengers:[";
+    str += "{id:\"armor_stand\",Health:0,Passengers:[";
+    str += "{id:\"falling_block\",Time:1,BlockState:{Name:\"activator_rail\"},Passengers:[";
+    const minecarts = cmds.map(c => `{id:"command_block_minecart",Command:"${c}"}`);
+    minecarts.push(`{id:"command_block_minecart",Command:"setblock ~ ~1 ~ command_block{auto:1,Command:\\"fill ~ ~-3 ~ ~ ~ ~ air\\"} replace"}`);
+    minecarts.push(`{id:"command_block_minecart",Command:"kill @e[type=command_block_minecart,distance=..1]"}`);
+    str += minecarts.join(',');
+    str += "]}]}]}";
+    return [str];
+  } else {
+    return fills.map(f => `/fill ${bx + f.x1} ${by + f.y} ${bz + f.z1} ${bx + f.x2} ${by + f.y} ${bz + f.z2} ${f.mat}`);
+  }
+}
+
+function updateCommands() {
+  const blocks = S.currentStep >= 0 && S.steps[S.currentStep] ? S.steps[S.currentStep] : S.blocks;
+  const cmds = generateCommands(blocks);
+  const lines = cmds.slice(0, 10);
+  if (cmds.length > 10) lines.push(`... +${cmds.length - 10} more`);
   document.getElementById('cmdJava').textContent = lines.join('\n') || '–';
 }
 
 function getAllCommands() {
-  const mat = document.getElementById('blockMaterial').value || 'stone';
-  const y = parseInt(document.getElementById('yLevel').value) || 64;
-  return S.blocks.map(b => `/setblock ${b.x} ${y} ${b.z} ${mat}`).join('\n');
+  return generateCommands(S.blocks).join('\n');
 }
 
 function exportCoordsTxt() {
-  const mat = document.getElementById('blockMaterial').value || 'stone';
-  const y = parseInt(document.getElementById('yLevel').value) || 64;
   const stackSize = Math.max(1, parseInt(document.getElementById('stackSize').value) || 64);
   const stacksNeeded = Math.ceil(S.blocks.length / stackSize);
-
   let txt = `# Minecraft Circle Builder Export\n# Radius: ${S.rx}x${S.rz} | Mode: ${S.mode} | Blocks: ${S.blocks.length}\n# Stacks needed (${stackSize}/stack): ${stacksNeeded}\n\n`;
 
   if (S.steps.length > 0) {
     S.steps.forEach((step, i) => {
       txt += `## Step ${i + 1} (${step.length} blocks)\n`;
-      step.forEach(b => txt += `/setblock ${b.x} ${y} ${b.z} ${mat}\n`);
-      txt += '\n';
+      txt += generateCommands(step).join('\n') + '\n\n';
     });
   } else {
-    txt += S.blocks.map(b => `/setblock ${b.x} ${y} ${b.z} ${mat}`).join('\n');
+    txt += generateCommands(S.blocks).join('\n');
   }
 
   const blob = new Blob([txt], {type: 'text/plain'});
@@ -1712,36 +1944,17 @@ document.getElementById('btnResetView').onclick = () => { centerView(); render()
 // ═══════════════════════════════════════════════════════
 // UI BINDINGS
 // ═══════════════════════════════════════════════════════
-function getActualRadius(inputVal, unit) {
-  const v = parseInt(inputVal) || 1;
-  return unit === 'chunk' ? v * 16 : v;
-}
 
 document.getElementById('radX').oninput = e => {
-  S.rx = getActualRadius(e.target.value, S.unitMode);
-  if (S.syncRadii) {
-    document.getElementById('radZ').value = e.target.value;
-    S.rz = S.rx;
-  }
-  updateRadiusDisplay();
+  if (S.syncRadii) document.getElementById('radZ').value = e.target.value;
   update();
 };
-document.getElementById('radZ').oninput = e => {
-  S.rz = getActualRadius(e.target.value, S.unitMode);
-  updateRadiusDisplay();
-  update();
-};
-
-function updateRadiusDisplay() {
-  const u = S.unitMode;
-  document.getElementById('unitX').textContent = u === 'chunk' ? 'chk' : 'blk';
-  document.getElementById('unitZ').textContent = u === 'chunk' ? 'chk' : 'blk';
-  document.getElementById('radXDisplay').textContent = u === 'chunk' ? `= ${S.rx}blk` : '';
-  document.getElementById('radZDisplay').textContent = u === 'chunk' ? `= ${S.rz}blk` : '';
-}
+document.getElementById('radZ').oninput = () => update();
 
 document.getElementById('unitMode').onchange = e => {
   S.unitMode = e.target.value;
+  document.getElementById('unitX').textContent = S.unitMode === 'chunk' ? 'chk' : 'blk';
+  document.getElementById('unitZ').textContent = S.unitMode === 'chunk' ? 'chk' : 'blk';
   const curX = parseInt(document.getElementById('radX').value) || 1;
   const curZ = parseInt(document.getElementById('radZ').value) || 1;
   if (S.unitMode === 'chunk') {
@@ -1751,9 +1964,11 @@ document.getElementById('unitMode').onchange = e => {
     document.getElementById('radX').value = Math.round(curX * 16);
     document.getElementById('radZ').value = Math.round(curZ * 16);
   }
-  S.rx = getActualRadius(document.getElementById('radX').value, S.unitMode);
-  S.rz = getActualRadius(document.getElementById('radZ').value, S.unitMode);
-  updateRadiusDisplay();
+  update();
+};
+
+document.getElementById('measureType').onchange = e => {
+  S.measureType = e.target.value;
   update();
 };
 
@@ -1762,7 +1977,6 @@ document.getElementById('syncRadii').onclick = () => {
   document.getElementById('swSync').classList.toggle('on', S.syncRadii);
   if (S.syncRadii) {
     document.getElementById('radZ').value = document.getElementById('radX').value;
-    S.rz = S.rx;
     update();
   }
 };
@@ -1784,9 +1998,28 @@ document.querySelectorAll('.seg-tab').forEach(btn => {
   };
 });
 
-document.getElementById('thickness').oninput = e => {
-  S.thickness = parseInt(e.target.value) || 2;
-  update();
+document.getElementById('thickness').oninput = e => { S.thickness = parseInt(e.target.value) || 2; update(); };
+document.getElementById('cylinderHeight').oninput = e => { S.cylHeight = parseInt(e.target.value) || 1; update(); };
+
+document.getElementById('baseMaterialSelect').onchange = e => {
+  const opts = Array.from(e.target.selectedOptions);
+  S.materials = opts.length > 0 ? opts.map(o => o.value) : ['stone'];
+  updateCommands();
+  syncToURL();
+};
+document.getElementById('customMaterial').oninput = e => {
+  S.customMat = e.target.value.trim();
+  updateCommands();
+  syncToURL();
+};
+document.getElementById('startX').oninput = e => { S.startX = parseInt(e.target.value)||0; updateCommands(); syncToURL(); };
+document.getElementById('startY').oninput = e => { S.startY = parseInt(e.target.value)||0; updateCommands(); syncToURL(); };
+document.getElementById('startZ').oninput = e => { S.startZ = parseInt(e.target.value)||0; updateCommands(); syncToURL(); };
+document.getElementById('togOneCmd').onclick = () => {
+  S.oneCmd = !S.oneCmd;
+  document.getElementById('swOneCmd').classList.toggle('on', S.oneCmd);
+  updateCommands();
+  syncToURL();
 };
 
 document.getElementById('numSteps').oninput = () => update();
@@ -1813,6 +2046,7 @@ function mkToggle(rowId, swId, key) {
     S[key] = !S[key];
     sw.classList.toggle('on', S[key]);
     render();
+    syncToURL();
   };
 }
 mkToggle('togGrid', 'swGrid', 'showGrid');
@@ -1840,8 +2074,111 @@ document.getElementById('btnCopyJava').onclick = () => {
   navigator.clipboard.writeText(txt).then(() => toast(dict[S.lang].toastCopy));
 };
 
-document.getElementById('blockMaterial').oninput = updateCommands;
-document.getElementById('yLevel').oninput = updateCommands;
+// ═══════════════════════════════════════════════════════
+// PRESETS & SYNC
+// ═══════════════════════════════════════════════════════
+function syncToURL() {
+  const state = {
+    rx: document.getElementById('radX').value,
+    rz: document.getElementById('radZ').value,
+    unit: S.unitMode,
+    meas: S.measureType,
+    sync: S.syncRadii,
+    mode: S.mode,
+    thk: S.thickness,
+    cyl: S.cylHeight,
+    mat: S.materials,
+    cmat: S.customMat,
+    sx: S.startX, sy: S.startY, sz: S.startZ,
+    oneCmd: S.oneCmd
+  };
+  const str = btoa(JSON.stringify(state));
+  window.history.replaceState({}, '', '?p=' + str);
+}
+
+function loadFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const p = params.get('p');
+  if (p) {
+    try {
+      const state = JSON.parse(atob(p));
+      document.getElementById('radX').value = state.rx || 16;
+      document.getElementById('radZ').value = state.rz || 16;
+      S.unitMode = state.unit || 'block';
+      document.getElementById('unitMode').value = S.unitMode;
+      S.measureType = state.meas || 'radius';
+      document.getElementById('measureType').value = S.measureType;
+      S.syncRadii = state.sync !== false;
+      document.getElementById('swSync').classList.toggle('on', S.syncRadii);
+      
+      S.mode = state.mode || 'thin';
+      document.querySelectorAll('.seg-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === S.mode);
+      });
+      document.getElementById('thickCtrl').style.display = S.mode === 'thick' ? 'block' : 'none';
+      
+      S.thickness = state.thk || 2;
+      document.getElementById('thickness').value = S.thickness;
+      S.cylHeight = state.cyl || 1;
+      document.getElementById('cylinderHeight').value = S.cylHeight;
+      
+      S.materials = state.mat || ['stone'];
+      const select = document.getElementById('baseMaterialSelect');
+      Array.from(select.options).forEach(o => o.selected = S.materials.includes(o.value));
+      
+      S.customMat = state.cmat || '';
+      document.getElementById('customMaterial').value = S.customMat;
+      
+      S.startX = state.sx || 0; document.getElementById('startX').value = S.startX;
+      S.startY = state.sy || 64; document.getElementById('startY').value = S.startY;
+      S.startZ = state.sz || 0; document.getElementById('startZ').value = S.startZ;
+      
+      S.oneCmd = state.oneCmd || false;
+      document.getElementById('swOneCmd').classList.toggle('on', S.oneCmd);
+    } catch(e) {}
+  }
+}
+
+document.getElementById('btnShareLink').onclick = () => {
+  syncToURL();
+  navigator.clipboard.writeText(window.location.href).then(() => toast(dict[S.lang].toastSave));
+};
+
+document.getElementById('btnSaveJson').onclick = () => {
+  const state = {
+    radX: document.getElementById('radX').value, radZ: document.getElementById('radZ').value,
+    unitMode: S.unitMode, measureType: S.measureType, syncRadii: S.syncRadii,
+    mode: S.mode, thickness: S.thickness, cylHeight: S.cylHeight,
+    materials: S.materials, customMat: S.customMat,
+    startX: S.startX, startY: S.startY, startZ: S.startZ, oneCmd: S.oneCmd
+  };
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `circle_preset.json`;
+  a.click();
+};
+
+document.getElementById('btnLoadJson').onclick = () => document.getElementById('fileLoad').click();
+document.getElementById('fileLoad').onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const state = JSON.parse(ev.target.result);
+      window.history.replaceState({}, '', '?p=' + btoa(JSON.stringify({
+        rx: state.radX, rz: state.radZ, unit: state.unitMode, meas: state.measureType,
+        sync: state.syncRadii, mode: state.mode, thk: state.thickness, cyl: state.cylHeight,
+        mat: state.materials, cmat: state.customMat, sx: state.startX, sy: state.startY, sz: state.startZ,
+        oneCmd: state.oneCmd
+      })));
+      loadFromURL();
+      update();
+    } catch (err) { alert('Invalid JSON file'); }
+  };
+  reader.readAsText(file);
+};
 
 // ═══════════════════════════════════════════════════════
 // TOAST
@@ -1867,6 +2204,7 @@ ro.observe(canvasArea);
 // INIT
 // ═══════════════════════════════════════════════════════
 setTimeout(() => {
+  loadFromURL();
   updateLangUI();
   centerView();
   update();
