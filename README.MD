@@ -10,7 +10,7 @@ Công cụ web giúp tính toán và trực quan hóa cách xây vòng tròn/ell
 
 ### Cách dùng
 
-Mở file `minecraft-circle-builder.html` bằng bất kỳ trình duyệt nào (Chrome, Edge, Firefox...). Không cần cài đặt gì thêm.
+Mở file `index.html` bằng bất kỳ trình duyệt nào (Chrome, Edge, Firefox...). Không cần cài đặt gì thêm.
 
 ### Tính năng
 
@@ -87,7 +87,7 @@ A web-based utility tool to calculate and visualize Minecraft circle/ellipse con
 
 ### Usage
 
-Open the `minecraft-circle-builder.html` file using any modern web browser (Chrome, Edge, Firefox...). No installation or configuration required.
+Open the `index.html` file using any modern web browser (Chrome, Edge, Firefox...). No installation or configuration required.
 
 ### Features
 
